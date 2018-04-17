@@ -13,6 +13,9 @@ library(magrittr)
 library(ggmap)
 library(dplyr)
 library(readxl)
+library(tidyr)
+library(lubridate)
+library(gridExtra)
 ```
 
 ##Lendo os dados
@@ -33,13 +36,50 @@ France <- qmap("languedoc-roussillon", zoom = 8,
                color, maptype = "toner")
 
 France +
-geom_point(aes(x = lon, y = lat),col = "red",size = 2,
-data = coord[c(36,37),]) +
-  geom_point(aes(x = lon, y = lat),col = "blue",size = 2,
+geom_point(aes(x = lon, y = lat), 
+           col = "red", 
+           size = 2, 
+           data = coord[c(36,37),]) +
+  geom_point(aes(x = lon, y = lat), 
+             col = "blue", 
+             size = 2,
 data = coord[c(1,3),]) +
-  geom_point(aes(x = lon, y = lat),col = "green",size = 2,
-data = coord[-c(1,3,36,37),]) 
+  geom_point(aes(x = lon, y = lat), 
+             col = "green", 
+             size = 2, 
+             data = coord[-c(1,3,36,37),]) 
 ```
 
 
+##Series comparando regiao azul com vermelha
+
+```{r}
+chuva_amostra <- chuva[,c(2,4,37,38)] %>% 
+  mutate(ano = rep(1975:1992,each = 6), 
+         mes = rep(11:12,each = 3,times = 18),
+         dia = rep(c(10,20,30),times = 36),
+         data = ymd(paste0(ano,mes,dia))) %>%
+  select(-ano,-mes,-dia) %>% 
+  gather(regiao,obs,-data) %>% 
+  mutate(rg = ifelse(regiao %in%
+                       c("Carcassonne","Limoux"),"A","V"))
+
+p1 <- 
+chuva_amostra %>%
+  filter(rg == "A") %>% 
+  ggplot(aes(data,obs)) +
+  geom_line(col = "blue") +
+  theme(x = NULL)+
+  facet_grid(.~regiao)
+
+p2 <- 
+chuva_amostra %>%
+  filter(rg == "V") %>% 
+  ggplot(aes(data,obs)) +
+  geom_line(col = "red") +
+  theme(x = NULL)+
+  facet_grid(.~regiao)
+
+grid.arrange(p1,p2)
+```
 
