@@ -16,6 +16,9 @@ library(readxl)
 library(tidyr)
 library(lubridate)
 library(gridExtra)
+###
+library(sp)
+library(gstat)
 ```
 
 ##Lendo os dados
@@ -82,4 +85,26 @@ chuva_amostra %>%
 
 grid.arrange(p1,p2)
 ```
+
+
+##Krigging primeira parte
+
+inicialmente estamos desconsiderando  o comportamento temporal dos dados, no caso estaremos considerando como variavel resposta a média do total de chuva em cada umas das cidades
+
+```{r}
+chuva_media <- apply(chuva[,-1],2,mean,na.rm = T) %>%
+ { data.frame(chuva = .) } %>% bind_cols(coord) %>%
+  mutate(nome = estacao$nom)
+
+
+chuva_media %>% 
+  ggplot(aes(lon, lat)) +
+  geom_point(aes(size = chuva), 
+             color = "blue",
+             alpha = 0.5) + 
+  ggtitle("media chuva por estacao") + 
+  theme_bw()
+
+```
+
 
