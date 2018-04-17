@@ -107,4 +107,13 @@ chuva_media %>%
 
 ```
 
+##ajustando o variograma
+
+```{r}
+coordinates(chuva_media) <- ~ lon + lat
+variograma <- variogram(chuva~1, chuva_media) 
+plot(variograma)
+fit <- fit.variogram(variograma, model = vgm("Mat"))
+plot(variograma,fit)
+```
 
