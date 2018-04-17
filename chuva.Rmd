@@ -1,8 +1,45 @@
 ---
 title: "chuva"
 author: "Matheus"
-date: "16 de abril de 2018"
 output: html_document
 ---
+
+
+##pacotes
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(ggmap)
+library(dplyr)
+library(readxl)
+```
+
+##Lendo os dados
+
+```{r}
+chuva <- read.csv("dados/pluieNA.novdec.csv",header = T)
+estacao <- read.csv("dados/pluieStations.Practicum.csv",header = T,stringsAsFactors = F)
+coord <- read_excel("dados/coord.xlsx")
+
+
+names(chuva) <- c("n",estacao$nom) 
+```
+##mapa
+
+
+```{r}
+France <- qmap("languedoc-roussillon", zoom = 8, 
+               color, maptype = "toner")
+
+France +
+geom_point(aes(x = lon, y = lat),col = "red",size = 2,
+data = coord[c(36,37),]) +
+  geom_point(aes(x = lon, y = lat),col = "blue",size = 2,
+data = coord[c(1,3),]) +
+  geom_point(aes(x = lon, y = lat),col = "green",size = 2,
+data = coord[-c(1,3,36,37),]) 
+```
+
 
 
