@@ -27,7 +27,7 @@ library(gstat)
 chuva <- read.csv("dados/pluieNA.novdec.csv",header = T)
 estacao <- read.csv("dados/pluieStations.Practicum.csv",header = T,stringsAsFactors = F)
 coord <- read_excel("dados/coord.xlsx")
-
+coord$i <- 1:nrow(coord)
 
 names(chuva) <- c("n",estacao$nom) 
 ```
@@ -35,7 +35,7 @@ names(chuva) <- c("n",estacao$nom)
 
 
 ```{r}
-France <- qmap("languedoc-roussillon", zoom = 8, 
+France <- qmap("languedoc-roussillon", zoom = 7, 
                color, maptype = "toner")
 
 France +
@@ -113,7 +113,57 @@ chuva_media %>%
 coordinates(chuva_media) <- ~ lon + lat
 variograma <- variogram(chuva~1, chuva_media) 
 plot(variograma)
-fit <- fit.variogram(variograma, model = vgm("Mat"))
+fit <- fit.variogram(variograma, model = vgm("Exc"))
 plot(variograma,fit)
+```
+
+##grid chuva
+
+```{r}
+max_lat <- max(coord$lat)
+max_lon <- max(coord$lon) 
+min_lat <- min(coord$lat)
+min_lon <- min(coord$lon)
+chuva_grid <- expand.grid(lat =
+                           seq(min_lat,max_lat,length.out = 200),
+                         lon = 
+                           seq(min_lon,max_lon,length.out = 200))
+
+chuva_grid_filter <- chuva_grid %>%
+  filter(lon < (min_lon + (max_lon - min_lon)*0.45) |
+         lat > (max_lat - (max_lat - min_lat)*.55)) %>% 
+  sample_n(200)
+###previsao
+
+
+coordinates(chuva_grid) <- ~ lon + lat
+my_krig <- 
+  krige(chuva~1, chuva_media, chuva_grid, model = fit)
+df_krig <- my_krig %>% 
+  as.data.frame()
+df_krig_filter <- df_krig %>% 
+  filter(lon < (min_lon + (max_lon - min_lon)*0.45) |
+         lat > (max_lat - (max_lat - min_lat)*.55)) %>% 
+  sample_n(200)
+
+
+```
+
+##plot krig
+
+```{r}
+df_krig %>% 
+ggplot(aes(x = lon, y = lat)) + 
+  geom_tile(aes(fill=var1.pred)) +
+  scale_fill_gradient(low = "yellow", high="red") +
+  theme_bw()
+
+
+df_krig %>% 
+ggplot(aes(x = lon, y = lat)) + 
+  geom_tile(aes(fill=var1.var)) +
+  scale_fill_gradient(low = "yellow", high="red") +
+  theme_bw() 
+
 ```
 
