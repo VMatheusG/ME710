@@ -1,0 +1,87 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+
+
+
+#O Modelo
+
+Considere:
+
+$s_i$é o par de de coordenadas de cada estação.
+
+$Z(s_i)$  o valor média de chuva observado em cada estação.
+
+$N(h)$ é o número de de pontos $(s_i,s_i+h)$ para cada valor $h$.
+
+$n$ é o numero total de estações amostradas.
+
+O objetivo da krigagem é estimar o valor da variavel Z num ponto não observado.
+
+para conseguirmos fazer inferência, iremos assumir isotropia, estacionaridade da média:
+
+$$
+E[Z(s_i)] = \mu \quad\forall  \; s_ì
+$$
+
+Estacionaridade da covariâcia e variograma:
+
+
+
+
+$$
+Cov(Z(s_i),Z(s_j)) = Cov(Z(s_i),Z(s_i +h))\quad \forall\ i,j\\
+\gamma(h) = \frac{1}{2}E[(Z(s_i)-Z(s_i + h))^2]
+$$
+
+
+ou seja a média, a covariâcia e o variograma são independentes da posição e podem ser estimados por:
+
+$$
+\hat\mu = \sum_{i=1}^{n}\frac{Z(s_i)}{n}\\
+\hat\gamma(h) = \frac{1}{2N(h)}\sum_{i=i}^{N(h)}[Z(s_i)-Z(s_i + h)]^2
+$$
+
+O estimador de krigagem $\hat Z(s_0)$ devera ter as seguintes propriedades:
+
+1 - Ser combinação linar dos valores conhecidos:
+
+$$
+\hat Z(s_0) = \sum_{i=1}^{n}\lambda_i\, Z(s_i)\qquad (1)
+$$
+
+2 - Ter Esperânça do erro  nula:
+
+$$
+E[\varepsilon(s_0)] = E[\hat Z(s_0) - Z(s_0)] = 0\qquad (2)
+$$
+
+3 - Variância do erro de estimação mínima:
+
+$$
+min\{Var[\varepsilon(s_0)] = E[(\hat Z(s_0) - Z(s_0))^2]\}
+\qquad (3)
+$$
+
+
+##Estimação
+
+para fazer a estimação dos $\lambda$ 's, acrescentando a 
+a hipótese de estacionaridade, temos que:
+
+$$
+E[\hat Z(s_0)] = E[\sum_{i=1}^{n}\lambda_i\, Z(s_i)] = \mu\sum_{i=1}^{n}\lambda_i 
+$$
+
+portanto,
+devemos estimar os $\lambda_i \; \forall i$, minimizando (3)
+sujeito a condição de que $\sum_{i=1}^{n}\lambda_i = 1$ ,que pode
+ser escrito como um sistema em função do variograma.
+
+O variograma amostral, foi ajustado a um modelo teórico de classe exponencial.
+

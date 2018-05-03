@@ -4,8 +4,11 @@ author: "Matheus"
 output: html_document
 ---
 
-
-##pacotes
+```{r, echo=FALSE}
+#Definindo padrões dos chuncks do Trabalho
+knitr::opts_chunk$set(fig.width = 6, fig.height = 3.5, fig.path = 'Figs/', fig.align='center', echo=FALSE, warning = FALSE, message = FALSE)
+```
+##Pacotes
 
 ```{r}
 library(tidyverse)
@@ -21,21 +24,21 @@ library(sp)
 library(gstat)
 ```
 
-##Lendo os dados
 
 ```{r}
 chuva <- read.csv("dados/pluieNA.novdec.csv",header = T)
 estacao <- read.csv("dados/pluieStations.Practicum.csv",header = T,stringsAsFactors = F)
 coord <- read_excel("dados/coord.xlsx")
-coord$i <- 1:nrow(coord)
+
 
 names(chuva) <- c("n",estacao$nom) 
 ```
-##mapa
+
+##Mapa
 
 
 ```{r}
-France <- qmap("languedoc-roussillon", zoom = 7, 
+France <- qmap("languedoc-roussillon", zoom = 8, 
                color, maptype = "toner")
 
 France +
@@ -102,22 +105,21 @@ chuva_media %>%
   geom_point(aes(size = chuva), 
              color = "blue",
              alpha = 0.5) + 
-  ggtitle("media chuva por estacao") + 
+  ggtitle("Média chuva por estacao") + 
   theme_bw()
 
 ```
 
-##ajustando o variograma
+##Variograma
 
 ```{r}
 coordinates(chuva_media) <- ~ lon + lat
 variograma <- variogram(chuva~1, chuva_media) 
-plot(variograma)
 fit <- fit.variogram(variograma, model = vgm("Exc"))
-plot(variograma,fit)
+plot(variograma,fit,xlab="Distância (h)", ylab="Semivariograma")
 ```
 
-##grid chuva
+
 
 ```{r}
 max_lat <- max(coord$lat)
@@ -140,30 +142,36 @@ coordinates(chuva_grid) <- ~ lon + lat
 my_krig <- 
   krige(chuva~1, chuva_media, chuva_grid, model = fit)
 df_krig <- my_krig %>% 
-  as.data.frame()
-df_krig_filter <- df_krig %>% 
-  filter(lon < (min_lon + (max_lon - min_lon)*0.45) |
-         lat > (max_lat - (max_lat - min_lat)*.55)) %>% 
-  sample_n(200)
+  as.data.frame() %>% 
+  mutate()
+
 
 
 ```
 
-##plot krig
+##krigagem
 
 ```{r}
+coord %<>% 
+  mutate(estacao = estacao$nom)
 df_krig %>% 
 ggplot(aes(x = lon, y = lat)) + 
   geom_tile(aes(fill=var1.pred)) +
   scale_fill_gradient(low = "yellow", high="red") +
+  geom_text(aes(x = lon, y = lat, label = estacao ), 
+            data = coord,size = 2.5) +
+  coord_cartesian(xlim = c(1.9,5.2)) +
+  labs(fill = "Volume Chuva") +
   theme_bw()
-
 
 df_krig %>% 
 ggplot(aes(x = lon, y = lat)) + 
   geom_tile(aes(fill=var1.var)) +
   scale_fill_gradient(low = "yellow", high="red") +
+  labs(fill = "Variância") +
   theme_bw() 
+
+
 
 ```
 
