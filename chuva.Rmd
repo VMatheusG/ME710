@@ -1,14 +1,21 @@
 ---
 title: "chuva"
 author: "Matheus"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r, echo=FALSE}
 #Definindo padrões dos chuncks do Trabalho
-knitr::opts_chunk$set(fig.width = 6, fig.height = 3.5, fig.path = 'Figs/', fig.align='center', echo=FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(fig.width = 6, fig.height = 3.5, fig.align='center', echo=FALSE, warning = FALSE, message = FALSE)
 ```
-##Pacotes
+
+#Resumo
+
+O objetivo do estudo tem como interesse predizer o volume de chuva em um período de 10 dias em áreas da  região de Languedoc-Roussillon na França, a partir de um estudo do modelo de kriging que é uma técnica dentro da área de  estatística espacial.
+
+
 
 ```{r}
 library(tidyverse)
@@ -19,11 +26,18 @@ library(readxl)
 library(tidyr)
 library(lubridate)
 library(gridExtra)
+library(gtable)
+library(grid)
 ###
 library(sp)
 library(gstat)
 ```
+#Introdução
 
+  A região de  Languedoc-Roussillon localizada ao sul da França é
+delimitada pela cordilheira de pirineus ao sul,pelo maciço central ao norte e pela costa mediterranea ao leste.
+ O clima é mediterraneo que é caracterizado verões quentes e secos e os invernos frescos e úmidos.
+  A topografia da região é bem variada contando com planices, planaltos e montanhas, tornando a região bem interessante de ser estudada.
 
 ```{r}
 chuva <- read.csv("dados/pluieNA.novdec.csv",header = T)
@@ -33,8 +47,6 @@ coord <- read_excel("dados/coord.xlsx")
 
 names(chuva) <- c("n",estacao$nom) 
 ```
-
-##Mapa
 
 
 ```{r}
@@ -58,6 +70,10 @@ data = coord[c(1,3),]) +
 
 
 ##Series comparando regiao azul com vermelha
+
+O método de kriging que será aplicado neste caso é baseado na fórmula de média ponderada e parte do princípio que pontos próximos no espaço tendem a ter valores mais parecidos do que pontos mais afastados, um exemplo disso temos ao comparar o gráfico de séries temporais dos pontos de medição da Figura 1, na Figura 2 nota-se
+que as regiões mais próximas possuem gráficos similares e as regiões afastadas possuem gráficos bem distintos.
+
 
 ```{r}
 chuva_amostra <- chuva[,c(2,4,37,38)] %>% 
@@ -107,10 +123,15 @@ chuva_media %>%
              alpha = 0.5) + 
   ggtitle("Média chuva por estacao") + 
   theme_bw()
-
+par(mfrow = c(1,2))
+hist(chuva_media$chuva,breaks =11)
+boxplot(chuva_media$chuva)
 ```
 
 ##Variograma
+
+para a utilização do método de krigagem foi feita a análise do variograma que é uma função que nos da informação sobre a variação espacial.
+O variograma amostral foi ajustado de acordo com o  modelo teórico de  classe exponencial.
 
 ```{r}
 coordinates(chuva_media) <- ~ lon + lat
@@ -145,33 +166,47 @@ df_krig <- my_krig %>%
   as.data.frame() %>% 
   mutate()
 
-
+coord %<>%
+  mutate(estacao = estacao$nom)
 
 ```
 
 ##krigagem
 
+Após determinado o variograma teórico, é possivel fazer a previsão dos pontos não observados com a técnica de krigagem ordinaria
+
 ```{r}
-coord %<>% 
-  mutate(estacao = estacao$nom)
-df_krig %>% 
-ggplot(aes(x = lon, y = lat)) + 
+
+p1 <-
+df_krig %>%
+ggplot(aes(x = lon, y = lat)) +
   geom_tile(aes(fill=var1.pred)) +
-  scale_fill_gradient(low = "yellow", high="red") +
-  geom_text(aes(x = lon, y = lat, label = estacao ), 
+  geom_contour(aes(z=var1.pred)) +
+  scale_fill_gradient(low = "green", high="red") +
+  geom_text(aes(x = lon, y = lat, label = estacao ),
             data = coord,size = 2.5) +
-  coord_cartesian(xlim = c(1.9,5.2)) +
-  labs(fill = "Volume Chuva") +
-  theme_bw()
+  coord_cartesian(xlim = c(2.1,5)) +
+  labs(fill = "Volume\n Chuva", y = "latitude",x=NULL) +
+  theme_bw()+
+  theme(legend.key.size = unit(0.5, "cm"),legend.title = element_text(size = 10))
+  
+p2 <-
+df_krig %>%
+ggplot(aes(x = lon, y = lat)) +
+  geom_tile(aes(fill=sqrt(var1.var))) +
+  geom_contour(aes(z=sqrt(var1.var))) +
+  scale_fill_gradient(low = "green", high="red") +
+  labs(fill = "Desvio \nPadrâo", x = "longitude", y = "latitude") +
+  theme_bw() +
+theme(legend.key.size = unit(0.5, "cm"),legend.title = element_text(size = 10))
 
-df_krig %>% 
-ggplot(aes(x = lon, y = lat)) + 
-  geom_tile(aes(fill=var1.var)) +
-  scale_fill_gradient(low = "yellow", high="red") +
-  labs(fill = "Variância") +
-  theme_bw() 
-
-
+g2 <- ggplotGrob(p1)
+g3 <- ggplotGrob(p2)
+g <- rbind(g2, g3, size = "first")
+g$widths <- unit.pmax(g2$widths, g3$widths)
+grid.draw(g)
 
 ```
+
+
 

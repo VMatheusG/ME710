@@ -15,28 +15,21 @@ Considere:
 
 $s_i$é o par de de coordenadas de cada estação.
 
-$Z(s_i)$  o valor média de chuva observado em cada estação.
-
-$N(h)$ é o número de de pontos $(s_i,s_i+h)$ para cada valor $h$.
+$Z(s_i)=Z_i$  o valor média de chuva observado em cada estação.
 
 $n$ é o numero total de estações amostradas.
 
-O objetivo da krigagem é estimar o valor da variavel Z num ponto não observado.
+O objetivo da krigagem é predizer o valor da variavel Z num ponto não observado.
 
-para conseguirmos fazer inferência, iremos assumir isotropia, estacionaridade da média:
+seja $\{\textbf{Z}(\textbf{s}):\textbf{s} \in D\}$ um campo gausiano aleatório, $D$ é o conjunto dos pares de coordenadas que perternce 
+a região de languedoc roussilon.
 
-$$
-E[Z(s_i)] = \mu \quad\forall  \; s_ì
-$$
-
-Estacionaridade da covariâcia e variograma:
-
-
-
+para conseguirmos fazer inferência, iremos assumir isotropia, estacionaridade da média,covariâcia e variograma::
 
 $$
-Cov(Z(s_i),Z(s_j)) = Cov(Z(s_i),Z(s_i +h))\quad \forall\ i,j\\
-\gamma(h) = \frac{1}{2}E[(Z(s_i)-Z(s_i + h))^2]
+E[Z(s_i)] = \mu \quad\forall  \; s_ì\\
+Cov(Z(s_i),Z(s_j)) = Cov(Z(s_i),Z(s_i +h))=C(h)\quad \forall\ i,j\\
+2\gamma(h) = E[(Z(s_i)-Z(s_i + h))^2] = 2[C(0)-C(h)]
 $$
 
 
@@ -44,44 +37,54 @@ ou seja a média, a covariâcia e o variograma são independentes da posição e
 
 $$
 \hat\mu = \sum_{i=1}^{n}\frac{Z(s_i)}{n}\\
-\hat\gamma(h) = \frac{1}{2N(h)}\sum_{i=i}^{N(h)}[Z(s_i)-Z(s_i + h)]^2
+\hat{C}(h)=\frac{1}{|N(\textbf{h})|}\sum_{|N(\textbf{h})|}(Z(s_i)-\hat{\mu})(Z(s_j)-\hat{\mu})\\
+2 \hat\gamma(\textbf{h}) = \frac{1}{|N(\textbf{h})|}\sum_{N(\textbf{h})}[Z(s_i)-Z(s_j)]^2
 $$
-
-O estimador de krigagem $\hat Z(s_0)$ devera ter as seguintes propriedades:
-
-1 - Ser combinação linar dos valores conhecidos:
+onde
 
 $$
-\hat Z(s_0) = \sum_{i=1}^{n}\lambda_i\, Z(s_i)\qquad (1)
+N(\textbf{h})=\{(s_i,s_j):s_i-s_j=\textbf{h}, \ i=1,...,n,\ j = 1,...,n\}\quad \textbf{h} \in R^2
 $$
 
-2 - Ter Esperânça do erro  nula:
+O estimador de krigagem $\hat Z(s_0)$ devera é obtido por minimizar
+
+
 
 $$
-E[\varepsilon(s_0)] = E[\hat Z(s_0) - Z(s_0)] = 0\qquad (2)
+min_\lambda \ E([Z(s_o)-p(\textbf{Z},s_0)]^2) = \\ 
+min_\lambda \{ \ Var(Z(s_o)-p(\textbf{Z},s_0))+(\mu-\sum_{i=1}^{n}\lambda_i\, Z(s_i))^2\}
 $$
 
-3 - Variância do erro de estimação mínima:
+onde: $p(\textbf{Z},s_0)=\sum_{i=1}^{n}\lambda_i\, Z(s_i)$
+
+que nos leva ao melhor preditor linear não viesado:
 
 $$
-min\{Var[\varepsilon(s_0)] = E[(\hat Z(s_0) - Z(s_0))^2]\}
-\qquad (3)
+\hat Z(s_0)= E[Z(s_0)|Z_1,...,Z_n]=\boldsymbol\mu+\Gamma_0\Gamma^{-1}(\textbf{Z}- 
+\boldsymbol{\mu})
+$$
+
+onde:
+
+$$
+\Gamma=\begin{bmatrix}
+  \gamma(0) & \gamma(s_2-s_1) & \cdots & \gamma(s_n-s_1)) \\
+  \gamma(s_1-s_2) & \gamma(0) & \cdots & \gamma(s_n-s_2)) \\
+  \vdots & \ddots & \ddots & \vdots\\
+  \gamma(s_1-s_n) & \cdots & \cdots & \gamma(0)
+\end{bmatrix}
+$$
+
+$$
+\Gamma_0^{\ t} = \begin{bmatrix}
+\gamma(s_0-s_1) \\
+\gamma(s_0-s_2) \\
+\vdots \\
+\gamma(s_0-s_n)
+\end{bmatrix}
 $$
 
 
-##Estimação
-
-para fazer a estimação dos $\lambda$ 's, acrescentando a 
-a hipótese de estacionaridade, temos que:
-
-$$
-E[\hat Z(s_0)] = E[\sum_{i=1}^{n}\lambda_i\, Z(s_i)] = \mu\sum_{i=1}^{n}\lambda_i 
-$$
-
-portanto,
-devemos estimar os $\lambda_i \; \forall i$, minimizando (3)
-sujeito a condição de que $\sum_{i=1}^{n}\lambda_i = 1$ ,que pode
-ser escrito como um sistema em função do variograma.
 
 O variograma amostral, foi ajustado a um modelo teórico de classe exponencial.
 
