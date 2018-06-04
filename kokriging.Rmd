@@ -1,0 +1,36 @@
+---
+title: "kogring temporal"
+author: "Matheus"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+pacotes
+
+```{r}
+library(rgbif)
+```
+
+obtendo altitude
+
+
+
+
+```{r}
+apikey <- 'AIzaSyAysurqxAWInf4FJkiusl80eAM0FSDryYI'
+# cood_elev <- elevation(latitude =  coord$lat, 
+#                        longitude =  coord$lon,
+#                        key =  apikey)
+
+
+# 
+# df_krig_elev <- elevation(latitude =  df_krig$lat, 
+#                        longitude =  df_krig$lon,
+#                        key =  apikey)
+
+
+```
+
