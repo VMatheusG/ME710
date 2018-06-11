@@ -1,44 +1,65 @@
 ---
 title: "R Notebook"
 output:
+  word_document: default
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
-
 
 
 
 #O Modelo
 
+  Iniciaremos com uma breve revisão da metodologia empregada, para
+mais detalhes consulte Cressie, N. (1993).
+
 Considere:
 
 $s_i$é o par de de coordenadas de cada estação.
 
-$Z(s_i)=Z_i$  o valor média de chuva observado em cada estação.
+$Z(s_i)=Z_i$  o valor média de chuva observado em cada estação(variavel regioanalizada).
 
 $n$ é o numero total de estações amostradas.
 
-O objetivo da krigagem é predizer o valor da variavel Z num ponto não observado.
 
-seja $\{\textbf{Z}(\textbf{s}):\textbf{s} \in D\}$ um campo gausiano aleatório, $D$ é o conjunto dos pares de coordenadas que perternce 
-a região de languedoc roussilon.
 
-para conseguirmos fazer inferência, iremos assumir isotropia, estacionaridade da média,covariâcia e variograma::
+O objetivo da krigagem é predizer o valor da variavel regional Z num ponto não observado.
+
+seja $\{\textbf{Z}(\textbf{s}):\textbf{s} \in D\}$ um campo gaussiano aleatório,é o conjunto dos pares
+de coordenadas que pertence a região Languedoc-Roussillon.
+
+###krigagem ordinaria
+
+supociçoes do modelo
+$$
+Z(s)= \: \mu + \delta(s) \qquad s \in D \qquad \mu \in \mathbb{R}
+$$
+e $\delta(.)$ é um processo estacionario  de média zero e variograma $2 \gamma(.)$.
+
+Para conseguirmos fazer inferência, iremos assumir isotropia,
+estacionaridade da média (1), covariância (2) e variograma (3):
 
 $$
-E[Z(s_i)] = \mu \quad\forall  \; s_ì\\
-Cov(Z(s_i),Z(s_j)) = Cov(Z(s_i),Z(s_i +h))=C(h)\quad \forall\ i,j\\
-2\gamma(h) = E[(Z(s_i)-Z(s_i + h))^2] = 2[C(0)-C(h)]
+\begin{array}{c}
+E[Z(s_i)] = \mu \quad\forall  \; s_ì \qquad (1)\\ 
+Cov(Z(s_i),Z(s_j)) = Cov(Z(s_i),Z(s_i +h))=C(h)\quad \forall\ i,j \qquad(2)\\
+2\gamma(h) = E[(Z(s_i)-Z(s_i + h))^2] = 2[C(0)-C(h)]\qquad(3)
+\end{array}
 $$
 
+$\begin{array}{c} \gamma(h) \end{array}$ é chamado de semivariograma a valiado em $\begin{array}{c} h = s_j - s_i \end{array}$.
 
-ou seja a média, a covariâcia e o variograma são independentes da posição e podem ser estimados por:
+
+Ou seja, a média, a covariância e o variograma são independentes da
+posição e podem ser estimados por:
 
 $$
+\begin{array}{c}
 \hat\mu = \sum_{i=1}^{n}\frac{Z(s_i)}{n}\\
 \hat{C}(h)=\frac{1}{|N(\textbf{h})|}\sum_{|N(\textbf{h})|}(Z(s_i)-\hat{\mu})(Z(s_j)-\hat{\mu})\\
 2 \hat\gamma(\textbf{h}) = \frac{1}{|N(\textbf{h})|}\sum_{N(\textbf{h})}[Z(s_i)-Z(s_j)]^2
+\end{array}
 $$
 onde
 
@@ -46,22 +67,25 @@ $$
 N(\textbf{h})=\{(s_i,s_j):s_i-s_j=\textbf{h}, \ i=1,...,n,\ j = 1,...,n\}\quad \textbf{h} \in R^2
 $$
 
-O estimador de krigagem $\hat Z(s_0)$ devera é obtido por minimizar
+O estimador de krigagem ordinaria $\hat{Z(s_0)}$  é obtido por minimizar
 
 
 
 $$
+\begin{array}{c}
 min_\lambda \ E([Z(s_o)-p(\textbf{Z},s_0)]^2) = \\ 
 min_\lambda \{ \ Var(Z(s_o)-p(\textbf{Z},s_0))+(\mu-\sum_{i=1}^{n}\lambda_i\, Z(s_i))^2\}
+\end{array}
 $$
 
-onde: $p(\textbf{Z},s_0)=\sum_{i=1}^{n}\lambda_i\, Z(s_i)$
+onde: $p(\textbf{Z},s_0)=\sum_{i=1}^{n}\lambda_i\, Z(s_i) \qquad \sum_{i=1}^{n} \lambda_{i}=1$
 
-que nos leva ao melhor preditor linear não viesado:
+Que nos leva ao melhor preditor linear não viésado:
 
 $$
-\hat Z(s_0)= E[Z(s_0)|Z_1,...,Z_n]=\boldsymbol\mu+\Gamma_0\Gamma^{-1}(\textbf{Z}- 
-\boldsymbol{\mu})
+\begin{array}{c}
+\hat{Z}(s_0)= E[Z(s_0)|Z_1,...,Z_n]=\boldsymbol{\mu}+\Gamma_0\Gamma^{-1}(\textbf{Z}-\boldsymbol{\mu})
+\end{array}
 $$
 
 onde:
@@ -86,5 +110,73 @@ $$
 
 
 
-O variograma amostral, foi ajustado a um modelo teórico de classe exponencial.
+
+###krigragem universal
+
+A krigragem universal é uma generalização da krigagem ordinaria, onde é assumido que a esperança de Z,não é mais constante mas sim uma combinação linear de de funções conhecidas
+{$f_{0}(s),\cdots,f_{ p}(s)$} $s \in D$.
+
+
+supociçoes do modelo
+
+$$
+Z(s)= \: \sum_{j=1}^{p+1} f_{j-1}(s) \beta_{j-1} + \delta(s) \qquad s \in D
+$$
+onde $\beta = (\beta_{0},\cdots,\beta_{p})' \in \mathbb{R}^{p+1}$
+é um vetor de paramêtros desconhecidos e  $\delta(.)$ é um processo estacionario  de média zero e variograma $2 \gamma(.)$.
+
+na forma matricial fica $\begin{array}{c}\boldsymbol{Z} =\boldsymbol{ X\beta} + \boldsymbol{\delta} \qquad (6)\end{array}$ 
+
+o estimador de krigagem universal é obtido de forma analoga ao de krigagem ordinaria minimizando:
+
+$$
+\begin{array}{c}
+min_\lambda \ E([Z(s_o)-p(\textbf{Z},s_0)]^2)
+\end{array}
+$$
+já a estimação dos parametros da media $\boldsymbol{\beta}$ pode ser obtidos facilmente.
+  De (6), os dados **Z** satisfazem um modelo linear geral,
+onde $E[\boldsymbol{Z}]=\boldsymbol{X\beta}$ e 
+$Var[\boldsymbol{Z}]=\boldsymbol{\Sigma}$. O estimador geral de minimos quadrado é dado por :
+
+$$
+\begin{array}{c}
+\boldsymbol{\hat{\beta}_{mqg}}=(\boldsymbol{X'\Sigma^{-1}X})^{-1}\boldsymbol{X'\Sigma^{-1}X}
+\end{array}
+$$
+
+
+
+
+
+Variograma
+
+Para a utilização do método de krigagem foi feita a análise do
+variograma, que é uma função que nos dá informação sobre a variação
+espacial. O variograma amostral foi ajustado de acordo com o modelo teórico
+de classe exponencial (4).
+
+$$
+\begin{array}{c}
+2\, \gamma(h,\theta) = 2\: C(0) \: exp(\frac{-3h^{w}}{r^w}) \qquad 0<w<2, \qquad r \geq 0 \qquad (4)
+\end{array}
+$$
+
+################Novo######################
+
+
+
+#VALIDAÇÃO CRUZADA
+
+  A técnica de validação cruzada leave-one-out (VCLOO) tem como objetivo obter uma estimativa para o erro quadrático médio(EQM) do modelo de predição em dados não observados e foi usado como metodo comparativo para seleção do modelos mais adequeado ao dados.
+  A metodologia consiste em saparar os dados em dois conjuntos, um contendo n-1 observações(conjunto de treino) e o outro contendo a observação restante(conjunto de teste), o modelo então é ajustado no conjunto de treino e então é computado o EQM no conjunto de teste.
+é repetido esse procedimento n vezes(para que todas as observações passem no conjunto de treino), produzindo n’s  erros quadrados então a estimavativa de VCLOO para o EQM do conjunto de teste  é a media dos n's EQM’s .
+
+$$
+\begin{array}{c}
+EQM_i = (Z(s_i)-\hat{Z}(s_i))^2   \\
+  VCLOO_{(n)} = \frac{1}{n}\sum_{i=i}^{n}EQM_i
+\end{array}
+$$
+
 

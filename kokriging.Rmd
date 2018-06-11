@@ -1,16 +1,32 @@
 ---
-title: "kogring temporal"
+title: "kriging"
 author: "Matheus"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
+```{r, echo=FALSE}
+#Definindo padrões dos chuncks do Trabalho
+knitr::opts_chunk$set(fig.width = 6, fig.height = 3.5, fig.align='center', echo=FALSE, warning = FALSE, message = FALSE)
+```
 pacotes
 
 ```{r}
+library(ggplot2)
+library(dplyr)
+library(magrittr)
+library(ggmap)
+library(dplyr)
+library(readxl)
+library(tidyr)
+library(lubridate)
+library(gridExtra)
+library(gtable)
+library(grid)
+###
+library(sp)
+library(gstat)
+
 library(rgbif)
 ```
 
@@ -31,6 +47,114 @@ apikey <- 'AIzaSyAysurqxAWInf4FJkiusl80eAM0FSDryYI'
 #                        longitude =  df_krig$lon,
 #                        key =  apikey)
 
+
+```
+
+### lendo os dados
+
+```{r}
+grid <- read_excel("dados/grid_elevation.xlsx")
+chuva <- read.csv("dados/pluieNA.novdec.csv",header = T)
+estacao <- read.csv("dados/pluieStations.Practicum.csv",header = T,stringsAsFactors = F)
+coord <- read_excel("dados/coord.xlsx")
+
+chuva_media <- apply(chuva[,-1],2,mean,na.rm = T) %>%
+ { data.frame(chuva = .) } %>% bind_cols(coord) %>%
+  mutate(nome = estacao$nom)
+
+
+names(chuva) <- c("n",estacao$nom) 
+
+# chuva_media%>% as.data.frame() %>% 
+#   ggplot(aes(x=elevation,y=chuva)) + geom_point()
+
+grid %>%
+ggplot(aes(x = lon, y = lat)) +
+  geom_tile(aes(fill=elevation)) +
+  geom_contour(aes(z=elevation)) +
+  scale_fill_gradient(low = "blue", high = "green")+
+  labs(fill = "Altitude", x = "longitude", y = "latitude") +
+  theme_bw() +
+theme(legend.key.size = unit(0.5, "cm"),legend.title = element_text(size = 10))
+
+
+# chuva_univ <- chuva %>% 
+#   mutate(ano = rep(seq(1975,1992),each = 6)) %>% 
+#   gather(estacao,chuva,-ano,-n) %>% 
+#   group_by(estacao,ano) %>% 
+#   summarise(media_chuva = mean(chuva)) %>% 
+#   spread(ano,media_chuva)
+```
+
+##
+
+
+```{r}
+coordinates(chuva_media) <- ~ lon + lat
+variograma <- variogram(chuva~1, chuva_media) 
+fit <- fit.variogram(variograma, model = vgm("Exc"))
+plot(variograma,fit,xlab="Distância (h)", ylab="Semivariograma")
+```
+
+##krigagem universal
+
+```{r}
+
+###previsao
+
+
+coordinates(grid) <- ~ lon + lat
+
+chuva_gstat <- gstat(id="chuva", 
+                     formula = chuva~elevation, 
+                     data = chuva_media, 
+                     model = fit)
+
+chuva_krige <- krige.cv(chuva~1,chuva_media,fit,nfold = 39)
+sqrt(mean(chuva_krige$residual^2))
+chuva_ukrige <- krige.cv(chuva~lon+lat+elevation,chuva_media,fit,nfold = 39)
+sqrt(mean(chuva_ukrige$residual^2))
+##predict
+
+
+predito_chuva <- predict(chuva_gstat ,newdata = grid)
+predito_chuva_df <- predito_chuva %>% as.data.frame()
+
+
+```
+###grafico
+```{r}
+
+coord %<>%
+  mutate(estacao = estacao$nom)
+p1 <- 
+predito_chuva_df  %>%
+ggplot(aes(x = lon, y = lat)) +
+  geom_tile(aes(fill=chuva.pred)) +
+  geom_contour(aes(z=chuva.pred)) +
+  scale_fill_gradient(low = "green", high="red") +
+  geom_text(aes(x = lon, y = lat, label = estacao ),
+            data = coord,size = 2.5) +
+  coord_cartesian(xlim = c(2.1,5)) +
+  labs(fill = "Volume\n Chuva", y = "latitude",x=NULL) +
+  theme_bw()+
+  theme(legend.key.size = unit(0.5, "cm"),legend.title = element_text(size = 10))
+  
+p2 <-
+predito_chuva_df %>%
+ggplot(aes(x = lon, y = lat)) +
+  geom_tile(aes(fill=sqrt(chuva.var))) +
+  geom_contour(aes(z=sqrt(chuva.var))) +
+  scale_fill_gradient(low = "green", high="red") +
+  labs(fill = "Desvio \nPadrâo", x = "longitude", y = "latitude") +
+  theme_bw() +
+theme(legend.key.size = unit(0.5, "cm"),legend.title = element_text(size = 10))
+
+g2 <- ggplotGrob(p1)
+g3 <- ggplotGrob(p2)
+g <- rbind(g2, g3, size = "first")
+g$widths <- unit.pmax(g2$widths, g3$widths)
+grid.draw(g)
 
 ```
 
